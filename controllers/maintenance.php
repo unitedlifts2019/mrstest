@@ -12,14 +12,20 @@
         
         function index()
         {   
+            //we are showing not signed maintenances
             $login_user = sess('user_id');       
-            $this->model->readAll("where completed_id = 2 AND maintenance.technician_id = $login_user order by maintenance_date DESC Limit 40");
+            //$this->model->readAll("where completed_id = 2 AND maintenance.technician_id = $login_user order by maintenance_date DESC Limit 40");
+            $this->model->readAll("where maintenance.technician_id = $login_user order by maintenance_date DESC Limit 40");                                    
             $this->view->render('maintenanceTable');
         }
         
         function form()
         {
-            $this->model->read(req('id'));
+            $updateMode = false; //if there is a maintenance id ,form is opened by update mode
+
+            //$this->model->read(req('id'));
+            $updateMode = $this->model->read(req('id'));
+           
             $jobs = new jobs();
             
             if(req('job_id')){
@@ -33,9 +39,10 @@
 			$users = mysqli_fetch_array(query("select * from technicians where technician_id = $login_user"));
 			$user_email = $users['technician_email'];
             
-            $disabled = "";
-            if($this->model->completed_id == 2)
-                $disabled = "DISABLED";
+            $disabled = ""; //for this moment we dont disable form elements,otherwise we cant reach their values
+            //if($this->model->completed_id == 2)
+            if($updateMode) 
+                $disabled = ""; //"DISABLED";
             
             $data = array (
                 "jobs"=>$jobs,
@@ -67,7 +74,24 @@
             $this->model->updated = time();
             $this->model->user_id = sess('user_id');
             $this->model->notify_email = req('notify_email');
-            $this->model->is_printed = null;
+            $this->model->is_printed = req('sign_and_print');
+            $this->model->customer_name = req('customer_name');
+            
+            $printOk =false ;
+            if( $this->model->is_printed > 0 )  $printOk = true;
+
+            if( req('yearmonth') == null) // form in create mode
+            {
+                $year = date("Y");
+                $active_month = trim( substr( req('active_month') ,5 ,2 ));
+                if( strlen($active_month) == 1 ) $active_month = "0" . $active_month;
+
+                $this->model->yearmonth = $year . $active_month;                
+            }
+            else    // form in update  mode
+                $this->model->yearmonth =  req('yearmonth');
+
+
 
             $jobs = new jobs();
             $jobs->model->read(req('job_id'));
@@ -78,27 +102,81 @@
             $user_id = $this->model->technician_id;
             $user =  mysqli_fetch_array(query("select * from users where user_id = $user_id"));
                             
-            if(req('maintenance_id'))
-            {
-                $this->model->update();
+            //we will use only 1 lift number
+            $liftsIdsChecked =  explode("|" , $this->model->lift_ids); 
+            
+            foreach($liftsIdsChecked as $liftId) {
+               if( $liftId == "" ) continue;
+               $this->model->lift_id = $liftId;            
+               break;
+           }
+
+           //this will give us checked list ids ,we are setting 
+           $liftTasksChecked = explode("|" , $this->model->task_ids);
+           $fileName = strtotime("now");
+           //$filename = (string)$this->model->maintenance_date;
+
+            if(req('maintenance_id')  &&  !$printOk )
+            {                
+                $result = $this->model->update();        
+                if($result != true)        
+                {
+                    sess('alert','Maintenance record could not be updated!'. $result);                    
+                    redirect( $_SERVER['HTTP_REFERER']) ;                   
+                    return;
+                }
+                //No more print for update
+                /*
                 $data = array(
                 "jobs"=>$jobs,
                 "user"=>$user,
                 "lifts"=>$lifts
                  );                     
-            $this->view->render('maintenancePrint',$data);
+                $this->view->render('maintenancePrint',$data); */
+
                 sess('alert','Maintenance Updated');
-                redirect(URL.'/maintenance/form/'.req('maintenance_id'));
-                
+                //redirect(URL.'/maintenance/form/'.req('maintenance_id'));
+                redirect(URL.'/maintenance/'); 
             }else{
-                $this->model->create();
-                $data = array(
-                "jobs"=>$jobs,
-                "user"=>$user,
-                "lifts"=>$lifts
-                 );                     
-            $this->view->render('maintenancePrint',$data);
+                if( $printOk )
+                {                    
+                    $this->model->lift_id = rand( -100000 ,0); //this is just for inserting purpose
+                }
+                else
+                {
+                    if($this->model->isMaintenanceDoneBefore( $this->model->lift_id , $this->model->yearmonth ))
+                    {
+                        $alertMsg = $this->model->getTechnicianNameOfMaintenance($this->model->lift_id , $this->model->yearmonth, sess('user_id'));
+
+                        sess('alert' ,$alertMsg ) ;
+                        redirect( $_SERVER['HTTP_REFERER']) ;
+                        return;
+                    }
+                }
+                $result = $this->model->create();                
                 
+                if($result != true)        
+                {
+                    sess('alert', 'Maintenance record could not be created ,please contact IT personnel');
+                    redirect( $_SERVER['HTTP_REFERER'] );                     
+                    return;
+                } 
+
+                $login_user = sess('user_id');
+                //This is set only for print part
+                $this->model->readAll("where maintenance.technician_id = $login_user  AND maintenance.job_id = $job_id AND yearmonth = " .$this->model->yearmonth ." order by maintenance_date DESC ");                        
+            
+                if ($printOk)
+                {
+                    $data = array(
+                    "jobs"=>$jobs,
+                    "user"=>$user,
+                    "lifts"=>$lifts,
+                    "fileName"=>$fileName
+                    );                     
+
+                    $this->view->render('maintenancePrint',$data);
+                }
                 sess('alert','Maintenance Created');
                 redirect(URL.'/maintenance/');           
             }
@@ -126,7 +204,7 @@
                 }
                 
                 $myID = $this->model->docket_no;
-                $filename = (string)$this->model->maintenance_date;
+                //$filename = (string)$this->model->maintenance_date;
 
                 $message = "
                     <img src='http://unitedlifts.com.au/wp-content/uploads/2016/09/logo.png'>

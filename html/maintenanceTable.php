@@ -1,12 +1,13 @@
 <link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.13/css/jquery.dataTables.css">
 <script type="text/javascript" charset="utf8" src="//cdn.datatables.net/1.10.13/js/jquery.dataTables.js"></script>
-    <h1>Closed Maintenance List by you</h1>
+    <h1>All Maintenance List </h1>
     
     <table width="100%" id="maintable">
         <thead>
             <tr>
                 <th>Date</th>
                 <th>Lift ids</th>
+                <th>Month</th>                
                 <th>Job Address</th>
                 <th></th>
             </tr>
@@ -16,10 +17,20 @@
             <tr>
                 <td><?=toDate($maintenance['maintenance_date'])?>  </td>
                 <td><?=getLifts($maintenance['lift_ids'])?>  </td> 
+                <td><?=$maintenance['yearmonth']?>  </td>                 
                 <td><?=$maintenance['job_address_number']?> <?=ucFirst($maintenance['job_address'])?> <?=ucFirst($maintenance['job_suburb'])?>  </td>
-                <td>
-                    <a href="<?=URL?>/maintenance/form/<?=$maintenance['maintenance_id']?>">View</a>          
-                </td>
+                <td><?
+                        if($maintenance['is_printed'] >= 1)
+                        {
+                            ?>
+                            Signed
+                        <?
+                        }
+                        else
+                        { ?>
+                            <a href="<?=URL?>/maintenance/form/<?=$maintenance['maintenance_id']?>">View</a>          
+                        <? }?>
+                 </td>
             </tr>
         <?}?>
         </tbody>

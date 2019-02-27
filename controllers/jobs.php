@@ -2,18 +2,22 @@
     class jobs
     {   
         public $model;
+        public $modelMaintenance;
+        
         private $view;
         
         function __construct()
         {
             $this->model = new jobsModel();
-            $this->view = new jobsView($this->model);        
+            $this->modelMaintenance = new maintenanceModel();
+
+            $this->view = new jobsView($this->model ,$this->modelMaintenance ); 
+            
         }
         
         function index()
         {          
-            
-			
+            			
 			if(req("search")){
 				$this->model->readAll("where job_name like '%".req("search")."%' OR job_address like '%".req("search")."%'");
 			}else{
@@ -27,6 +31,12 @@
         function form()
         {
             $this->model->read(req('id'));
+            $currentYear = date("Y");
+            $job_id = req('id');
+            $login_user = sess('user_id'); 
+            //we removed completed_id = 2 ,we show all maintenances now for whole year           
+            $this->modelMaintenance->readAll("where maintenance.job_id = $job_id AND maintenance.technician_id = $login_user  AND maintenance.yearmonth like '$currentYear%' order by maintenance.lift_id ,maintenance.yearmonth   DESC Limit 40");            
+            
             $this->view->render('jobsForm');
         }
         

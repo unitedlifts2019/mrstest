@@ -1,5 +1,5 @@
 <?ob_start();?>
-  <html>
+<html>
   <style>
     a {
       color: #0087C3;
@@ -13,9 +13,7 @@
       background: #FFFFFF;
       font-family: sans-serif;
       font-size: 12px;
-      font-family: SourceSansPro;
-      width: 21cm;
-      height: 29.7cm;
+      font-family: SourceSansPro;      
     }
 
     header {
@@ -88,16 +86,21 @@
       bottom: 10px
     }
 
+    serviceTechnician {
+      position: absolute;
+      bottom: 70px;
+    }
+
     fotter {
       position: absolute;
       bottom: 19px;
     }
   </style>
-
-  <body>
+    <body>
     <header class="clearfix">
       <div id="logo">
-        <img src="<?=URL?>/public/img/logo.png">
+        <? $fileLogo = $_SERVER['DOCUMENT_ROOT']."/mrstest/public/img/logo.png";?>
+        <img src= <?=$fileLogo?> >
       </div>
       <div id="company">
         <div>Unit 3 / 260 Hyde St YARRAVILLE VIC 3013
@@ -142,79 +145,70 @@
               </p>
           </div>
         </div>
-      </div>
-      <table>
-        <tr>
-          <td colspan="2">
-            <div style="border:0px solid black;height:300px;padding:10px;">
-              <p>
-                <b style="color:#0087C3">
-                  <u>Maintenance Details</u>
-                </b>
-              </p>
-
-              <p>
+        <div id ="table">
+                
+            <div style="border:0px solid black;height:2px;padding:10px;">             
+                <b style="color:#0087C3"> <u>Maintenance Details</u></b>
+                <br/>
                 <b>Maintenance Description: </b>
                 <?=$this->model->maintenance_notes?>
-              </p>
+             
+              <? foreach($this->model->list as $maintenance)
+                 {
+                    if( $maintenance['lift_id'] < 0 || $maintenance['lift_id'] == null ) 
+                        continue; // signed ones no need tp print
+                   else 
+                   {?>
+                    <table width="50%" border="1" style="border-collapse:collapse">
+                      <tr>
+                        <th>Lift Name </th>                  
+                        <th> <?=$maintenance['lift_name'] ?></th>                    
+                      </tr>
+                      <?} 
+                        $tasks = trim($maintenance['task_ids'] ,"|");
+                        $tasks = explode("|",$tasks);
+                    
+                        foreach($tasks as $task)
+                        {
+                          if( $task == "") continue;
+                          if( $maintenance['lift_type'] == "L" )
+                              $task_name = get_query("select * from _lift_tasks where task_id =".$task);
+                          else 
+                              $task_name = get_query("select * from _escalator_tasks where task_id =".$task);                      
+                            
+                            $task_name = $task_name[0]?>
+                              <tr>
+                                <td nowrap><?=$task_name["task_name"]?></td>
+                                <td> Y </td>
+                              </tr>
+                       <?}?>
+                </table>
+              <br>                  
+              <?}?>
+        </div>
 
-              <div style="height:1px;width:100%;background-color:#0087C3;margin-bottom:10px;position:center;"></div>
-				
-              <table width="100%" border="1" style="border-collapse:collapse">
-                <tr>
-                  <th>Maintenance Task</th>
-                  <?foreach($lifts as $lift){?>
-                    <th>
-                      <?=$lift['lift_name']?>
-                    </th>
-                    <?}?>
-                </tr>
-                <?
-                  //Manual entry here because my brain is not fucking working today. Needs to be done tho
-                  $tasks = trim($this->model->task_ids,"|");
-                  $tasks = explode("|",$tasks);
-              ?>
-
-                  <?foreach($tasks as $task){?>
-                    <?$task_name = get_query("select * from _new_tasks where task_id =".$task);?>
-                      <?$task_name = $task_name[0]?>
-                        <tr>
-                          <td>
-                            <?=$task_name["task_name"]?>
-                          </td>
-                          <?foreach($lifts as $lift){?>
-                            <td>
-                              <?if (strstr($this->model->lift_ids,$lift['lift_id'])){?>
-                                Y
-                                <?}?>
-                            </td>
-                            <?}?>
-                        </tr>
-                        <?}?>
-
-
-              </table>
-	
-					
-
-              <table style="margin-top:80px;">
-                <tr>
-                  <td style="width:300px">
-                    <p>
-                      <b>Service Technician</b>
-                    </p>
-                    <?=$user["realname"]?>
-                  </td>
-                  <td style="width:300px">
-                    <p>
-                      <b>Customer Email</b>
-                    </p>
-                    <?=$jobs->model->job_email?>
-                  </td>
-                </tr>
-              </table>
+        
+      </div>
+     
     </main>
-    <div id="line"></div>
+
+    <serviceTechnician>
+     <table class = "serviceTechnician" ">
+       <tr>
+        <td style="width:300px">          
+          <b>Service Technician</b>
+          <?=$user["realname"]?>
+        </td>
+        <td style="width:300px">
+          <b>Customer Email</b>          
+          <?=$jobs->model->job_email?>
+        </td>
+      </tr>
+     </table>
+     </serviceTechnician>
+
+     <div id="line"></div>
+    
     <fotter>
       Thanks for choosing  United Lifts Services! 24 Hour Service, Phone 1300161740
     </fotter>
@@ -225,11 +219,23 @@
 	$contents = ob_get_contents();
 	ob_end_clean();
     
-	require_once("dompdf/dompdf_config.inc.php");
-	$dompdf = new DOMPDF();
-	$dompdf->load_html($contents);
+require_once 'dompdf/lib/html5lib/Parser.php';
+require_once 'dompdf/lib/php-font-lib/src/FontLib/Autoloader.php';
+require_once 'dompdf/lib/php-svg-lib/src/autoload.php';
+require_once 'dompdf/src/Autoloader.php';
+
+Dompdf\Autoloader::register();
+
+use Dompdf\Dompdf;
+
+
+
+$dompdf = new Dompdf();
+  $dompdf->load_html($contents);
+  //$customPaper = array(0,0,950,950);
+  $dompdf->set_paper('A4', 'landscape');
 	$dompdf->render();
-  $file_location = $_SERVER['DOCUMENT_ROOT']."/melbournemrs/functions/pdfReports/".$this->model->maintenance_date.".pdf";
+  $file_location = $_SERVER['DOCUMENT_ROOT']."/mrstest/functions/pdfReports/".$fileName.".pdf";
   file_put_contents($file_location, $dompdf->output());
   header('Location: ' . $_SERVER['HTTP_REFERER']);
 ?>

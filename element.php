@@ -44,6 +44,19 @@
                 return $rows;                
             }
         }
+        
+        static function executeQuery($query)
+        {
+            $result = mysqli_query(db::$conn ,$query);
+
+            if(!mysqli_error(db::$conn) )
+            {
+                return true;
+            }
+            else
+                return $mysqli->error;
+        }
+
     }
     
     class view
@@ -246,14 +259,123 @@
             closedir($handle);
         }    
     }
+    function isInArray( $searchedItem ,$searchedArray )
+    {
+        $exist =false;
+
+        foreach($searchedArray as $item) 
+         {
+            if( $item == "" || $item == "|"  ) continue;
+            if( $item == $searchedItem) 
+            {
+                $exist = true;
+                break;
+            }                        
+         }
+
+        return $exist; 
+    }
+    function checkTaskList($table,$id,$name,$current,$where=null ,$disabled =null )
+    {        
+        //Since the checklist uses the |id|id| method, we will modify this
+        $list = db::query("select * from $table $where");
+        
+        // Her lift icin hidden bir deger ,lift type ini gosteren aticaz ki javascript
+        // document.getElementById() ile type ini yeniden server a gitmeden goreelim ve tasklarini getirelim
+        $count=0;
+      
+        $taskIds =  explode("|" , $current); 
+        $inHTML = "<table>" ;
+
+        if($list){
+            foreach($list as $item)
+            {
+                $checked = "";
+                /*
+                if(strstr("|".$current,$item[$id]."|"))
+                    $checked = "CHECKED";
+                  */  
+                if( isInArray( $item[$id] ,$taskIds  ) )             
+                    $checked = "CHECKED";
+
+                $inHTML = $inHTML . "<tr><td>$item[$name]</td><td><div class='checkboxFive'><input name='$id"."_".$count."' id= '".$id."_".$count."' type='checkbox'  $checked $disabled style ='visibility:hidden' value='$item[$id]' /><label for= '".$id."_".$count."'></label></div></td></tr>";               
+
+                $count++;
+            }
+            $inHTML = $inHTML."</table>";
+        }
+
+        echo $inHTML;
+    }
+
+    function generateFullTasks( $lift_id , $lift_type ,$task_ids, $yearmonth ,$emptyTasks)
+    {
+        //we are creating lifts for 12 months
+        if( $lift_type == "E")
+            $liftName = "escalator_" . $lift_id . "_" . $yearmonth ;
+        else
+            $liftName = "lift_" . $lift_id . "_" . $yearmonth ;
+            
+
+        $monthVal = trim( substr( $yearmonth ,4 ,2 ));
+        
+        if( substr($monthVal,0 ,1 ) =="0" ) 
+            $monthVal = 'month' . trim( substr($monthVal ,1 ,2 )); 
+        else 
+            $monthVal = 'month' .trim( $monthVal) ;         
+
+        
+        if($lift_type == "L")
+            echo "<script> var $liftName = JSON.parse(JSON.stringify( liftstasks )); var taskCount = 42; var liftName = eval($liftName);  </script>";
+        else
+            echo "<script> var $liftName = JSON.parse(JSON.stringify( escalatorstasks ));  var taskCount = 35; var liftName = eval($liftName); </script>";
+        
+        if($emptyTasks == true )
+        {
+            $emptyingTasks = "<script> for( var i = 0 ; i < taskCount ; i++ ) { for(var k = 1 ; k <= 12 ; k++ ) { month = 'month' + k; liftName[i][month] = 0 ;} } </script>" ;         
+            echo $emptyingTasks;
+        }
+         
+
+        foreach(explode("|",$task_ids) as $task_id)
+        {  
+            
+            if ( $task_id != "" ||  $task_id != 0 )
+            {
+                $task_id = $task_id - 1;
+                //we are decreasing 1 ,because array index starts from 0
+                $index = "[".$task_id."][" ."'$monthVal'" ."]";
+                echo "<script> $liftName$index = 1; </script>"; 
+            }                
+            
+        }        
+    }
+
+
     
-    function checkList($table,$id,$name,$current,$where=null)
+    function getLiftType( $id)
+    {
+        $lift = db::query("select * from lifts where lift_id = $id");
+        $lift_type = "";
+        
+        if($lift )
+        {            
+            if( count($lift) > 0)
+               $lift_type = $lift[0]['lift_type'] ;  
+        }
+            
+        return $lift_type;
+    }
+    function checkListForLifts($table,$id,$name,$current,$where=null ,$disabled =null)
     {
         //Since the checklist uses the |id|id| method, we will modify this
         $list = db::query("select * from $table $where");
         
         $count=0;
         
+        // For every lift a hidden lift typeis set
+        // BY using document.getElementById() we can get the tasks
+
         if($list){
             foreach($list as $item)
             {
@@ -261,12 +383,98 @@
                 if(strstr("|".$current,$item[$id]."|"))
                     $checked = "CHECKED";
                     
-                echo "<label>$item[$name]</label><input name='$id"."_".$count."' type='checkbox' class='chk_$table' $checked value='$item[$id]'><br>\n";
-                $count++;
+                    $liftType = $item["lift_type"] ;          
+                
+                    echo "<label>$item[$name]</label><input name='$id"."_".$count."' type='checkbox' lift_type = '$liftType' class='chk_$table' $checked value='$item[$id]'><br>\n";                    
+                    $count++;
             }
         }
-    } 
-       
+    }
+
+    function checkSelectForLifts($table,$id,$name,$current,$where=null ,$disabled =null)
+    {
+        //Since the checklist uses the |id|id| method, we will modify this
+        $list = db::query("select * from $table $where");
+        
+        $count=0;
+        
+        // For every lift a hidden lift typeis set
+        // BY using document.getElementById() we can get the tasks
+
+        if($list){
+            echo "<select id = 'active_lift' name='active_lift' <?=$disabled?> ";
+
+            foreach($list as $item)
+            {
+                $checked = "";
+                if(strstr("|".$current,$item[$id]."|"))
+                    $checked = "CHECKED";
+                    
+                    $liftType = $item["lift_type"] ;          
+                
+                    //echo "<label>$item[$name]</label><input name='$id"."_".$count."' type='checkbox' lift_type = '$liftType' class='chk_$table' $checked value='$item[$id]'><br>\n";                    
+                    echo " <option value='$item[$id]' lift_type = '$liftType' >$item[$name]</option>";
+                    $count++;
+            }
+
+            echo "</select>";  
+        }
+    }
+     
+    function checkList($table,$id,$name,$current,$where=null ,$disabled =null)
+    {
+        //Since the checklist uses the |id|id| method, we will modify this
+        $list = db::query("select * from $table $where");
+        
+        $count=0;
+        
+        // For every lift a hidden lift typeis set
+        // BY using document.getElementById() we can get the tasks
+
+        if($list){
+            foreach($list as $item)
+            {
+                $checked = "";
+                if(strstr("|".$current,$item[$id]."|"))
+                    $checked = "CHECKED";
+                   
+                    echo "<label>$item[$name]</label><input name='$id"."_".$count."' type='checkbox' class='chk_$table' $checked value='$item[$id]'><br>\n";                    
+                    $count++;
+            }
+        }
+    }
+
+    function dropListForLifts($liftsRows)
+    {
+        //$options = db::query("select * from m");
+        echo "<select name='liftsForJob' id='liftsForJob' class='form-control' onchange='generateCheckList(this.value)' required>";
+        echo "<option SELECTED value=''>Please Select</option>";
+        $count=0;
+        $lift_idStr ='lift_id' ;
+
+        $processed_lifts = '';
+        $startPos = 0;
+
+        //we need to see only unique lifts ,because maintanances can have the same field lift for different months
+        foreach($liftsRows as $liftRow)
+        {        
+            if( $liftRow['lift_id'] == 0 || $liftRow['lift_id'] == null )  continue;             
+
+            $startPos = strpos($processed_lifts , $liftRow[$lift_idStr] );
+            if ($startPos == false ) 
+                $processed_lifts =  $processed_lifts . ',' . $liftRow[$lift_idStr] ;
+            else
+                continue; //we already processed it             
+                
+
+            //echo "<option value = $liftRow[$lift_idStr] >".$liftRow['lift_name'].'</option>'."\n";
+            echo "<option value = $liftRow[$lift_idStr] lift_type = '".$liftRow['lift_type']. "' >".$liftRow['lift_name'].'</option>'."\n";
+            
+
+            $count++;
+        }
+        echo '</select>';
+    }
     function dropList($table,$id,$name,$current,$where=null)
     {
         $options = db::query("select * from $table $where");
