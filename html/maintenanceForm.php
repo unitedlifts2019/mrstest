@@ -143,7 +143,12 @@ function validateChecks()
         {
             alert("While signing ,no lift can be selected ,please deselect lift.");
             return false;
-        }        
+        }       
+        if( document.getElementById('notify_email').value == "" )       
+        {   
+            alert("While signing ,an email address should be provided!");
+            return false;
+        } 
     }
 
     return true;

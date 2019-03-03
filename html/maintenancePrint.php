@@ -237,5 +237,6 @@ $dompdf = new Dompdf();
 	$dompdf->render();
   $file_location = $_SERVER['DOCUMENT_ROOT']."/mrstest/functions/pdfReports/".$fileName.".pdf";
   file_put_contents($file_location, $dompdf->output());
-  header('Location: ' . $_SERVER['HTTP_REFERER']);
+  //header('Location: ' . $_SERVER['HTTP_REFERER']);
+  
 ?>
