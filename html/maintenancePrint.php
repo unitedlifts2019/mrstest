@@ -88,7 +88,7 @@
 
     serviceTechnician {
       position: absolute;
-      bottom: 70px;
+      bottom: 35px;
     }
 
     fotter {
@@ -233,7 +233,7 @@ use Dompdf\Dompdf;
 $dompdf = new Dompdf();
   $dompdf->load_html($contents);
   //$customPaper = array(0,0,950,950);
-  $dompdf->set_paper('A4', 'landscape');
+  $dompdf->set_paper('A4', 'portrait');
 	$dompdf->render();
   $file_location = $_SERVER['DOCUMENT_ROOT']."/mrstest/functions/pdfReports/".$fileName.".pdf";
   file_put_contents($file_location, $dompdf->output());

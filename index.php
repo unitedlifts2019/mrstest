@@ -1,4 +1,4 @@
-<?
+<?php
     //Load Element config and Framework
     include('config.php');
     

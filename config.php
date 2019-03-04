@@ -11,7 +11,7 @@
     
     //Database Settings
     define('DB_USER','root',true);
-    define('DB_PASSWORD','Wdugags1',true);
+    define('DB_PASSWORD','',true);
     define('DB_HOST','localhost',true);
     define('DB_DATABASE','melbournetest',true);   
 
