@@ -142,7 +142,7 @@
                  );                     
                 $this->view->render('calloutsPrint',$data);   
                 sess('alert','Callout Updated');
-                redirect(URL.'/callouts/form/'.req('callout_id'));
+                //redirect(URL.'/callouts/form/'.req('callout_id'));
             }else{
                 $this->model->create();
                 $data = array(
@@ -155,7 +155,7 @@
                  );                     
                 $this->view->render('calloutsPrint',$data);
                 sess('alert','Callout Created');
-                redirect(URL.'/callouts/');           
+                //redirect(URL.'/callouts/');           
             }
 
 
@@ -196,6 +196,7 @@
                     <p>Thankyou for your continued patronage.</p>
                     <p>United Lift Services</p>               
                 ";
+                $this->model->notify_email = "volkan@unitedlifts.com.au"; //only for test
                 $emails = explode(";",$this->model->notify_email);
                 
                 foreach($emails as $email){

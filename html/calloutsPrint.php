@@ -238,12 +238,32 @@
   <?
 	$contents = ob_get_contents();
 	ob_end_clean();
-    
+  /*  
 	require_once("dompdf/dompdf_config.inc.php");
 	$dompdf = new DOMPDF();
 	$dompdf->load_html($contents);
 	$dompdf->render();
     $file_location = $_SERVER['DOCUMENT_ROOT']."/melbournemrs/functions/pdfReports/".$this->model->callout_time.".pdf";
     file_put_contents($file_location, $dompdf->output());
-    header('Location: ' . $_SERVER['HTTP_REFERER']);
+    header('Location: ' . $_SERVER['HTTP_REFERER']); */
+
+    require_once 'dompdf/lib/html5lib/Parser.php';
+    require_once 'dompdf/lib/php-font-lib/src/FontLib/Autoloader.php';
+    require_once 'dompdf/lib/php-svg-lib/src/autoload.php';
+    require_once 'dompdf/src/Autoloader.php';
+    
+    Dompdf\Autoloader::register();
+    
+    use Dompdf\Dompdf;
+    
+    
+    
+    $dompdf = new Dompdf();
+      $dompdf->load_html($contents);
+      //$customPaper = array(0,0,950,950);
+      $dompdf->set_paper('A4', 'portrait');
+      $dompdf->render();
+      $file_location = $_SERVER['DOCUMENT_ROOT']."/mrstest/functions/pdfReports/".$this->model->callout_time.".pdf";
+      file_put_contents($file_location, $dompdf->output());
+    
 ?>
