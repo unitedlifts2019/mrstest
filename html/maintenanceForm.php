@@ -307,7 +307,6 @@ function showTask2(month)
         <input type="hidden" name="maintaned_lftId" id = "maintaned_lftId" class="form-control" value="<?=$this->model->lift_id?>">
 
 
-        <label>Staus</label><?dropList('_completed','completed_id','completed_value',$this->model->completed_id);?><br>
         <label>Date: </label><input id="maintenance_date" type="datetime-local" class="date" name="maintenance_date" placeholder="maintenance_date" class="form-control" value="<?=toDateTime($this->model->maintenance_date)?>" <?=$disabled?> required ><br>
         <label>Docket no: </label><input type="text" name="docket_no" placeholder="docket_no" class="form-control" value="<?=$this->model->docket_no?>" <?=$disabled?> required ><br>    
         <label>Order no: </label><input type="text" name="order_no" placeholder="order_no" class="form-control" value="<?=$this->model->order_no?>" <?=$disabled?> required ><br>      
@@ -354,10 +353,10 @@ function showTask2(month)
             <img src="<?=$this->model->technician_signature?>">
         <?}?>         -->
         
-        <label>Toa: </label><input id="toa" type="datetime-local" class="date"  name="maintenance_toa" placeholder="maintenance_toa" class="form-control" value="<?=toDateTime($this->model->maintenance_toa)?>" <?=$disabled?> required ><br>              
-        <label>Tod: </label><input id="tod" type="datetime-local" class="date"  name="maintenance_tod" placeholder="maintenance_tod" class="form-control" value="<?=toDateTime($this->model->maintenance_tod)?>" <?=$disabled?> required ><br>           
+        <label>Time of arrival: </label><input id="toa" type="datetime-local" class="date"  name="maintenance_toa" placeholder="maintenance_toa" class="form-control" value="<?=toDateTime($this->model->maintenance_toa)?>" <?=$disabled?> required ><br>              
+        <label>Time of departure: </label><input id="tod" type="datetime-local" class="date"  name="maintenance_tod" placeholder="maintenance_tod" class="form-control" value="<?=toDateTime($this->model->maintenance_tod)?>" <?=$disabled?> required ><br>           
          <select id = "active_month" name="active_month" <?=$disabled?> onchange="generateCheckList(this.value)">
-		  <option value="">Select task:</option>
+		  <option value="">Select montly tasks:</option>
 		  <option value="month1">January</option>
 		  <option value="month2">February</option>
 		  <option value="month3">March</option>

@@ -64,7 +64,7 @@
             $this->model->service_type_ids = getChecked('service_type_id');
             $this->model->task_ids = getChecked('task_id');
             $this->model->maintenance_notes = req('maintenance_notes');
-            $this->model->completed_id = req('completed_id');
+            //$this->model->completed_id = req('completed_id');
             $this->model->maintenance_toa = strtotime(req('maintenance_toa'));
             $this->model->maintenance_tod = strtotime(req('maintenance_tod'));
             $this->model->docket_no = req('docket_no');
