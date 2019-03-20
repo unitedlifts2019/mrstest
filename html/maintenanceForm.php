@@ -161,13 +161,53 @@ function showSignPart()
         emptyTaskList();
     }
     else
+    {
         document.getElementById('divSignPrint').style.display = "none";
-
+        document.getElementById("tblselectAllTasks").style.display = "block";
+    }
 }
 
 function emptyTaskList()
 {
     document.getElementById("txtHit").innerHTML  = "";
+    document.getElementById("tblselectAllTasks").style.display = "none";
+}
+
+function checkAllTasks()
+{
+    var allTasksCheck = document.getElementById("selectAllTasks");
+    var checkboxes = $("input:checkbox");
+
+    var i; var count = 0 ;
+    for (i = 0; i < checkboxes.length; i++) 
+        if ( checkboxes[i].id.startsWith("task_id") ) count++ ;                            
+    
+
+    if(count == 0)
+    {
+        alert("No task is listed yet, to see the task list you should select a month .");
+        allTasksCheck.checked =false;        
+        return;
+    }    
+
+    if(allTasksCheck.checked)
+    {                 
+        var i;
+        for (i = 0; i < checkboxes.length; i++) 
+        {
+            if ( checkboxes[i].id.startsWith("task_id") ) 
+                checkboxes[i].checked =true ;                            
+        }
+    }
+    else
+    {
+        var i;
+        for (i = 0; i < checkboxes.length; i++) 
+        {
+            if ( checkboxes[i].id.startsWith("task_id") ) 
+                checkboxes[i].checked = false ;                            
+        }
+    }
 }
 
 function  generateCheckList(month)
@@ -190,6 +230,7 @@ function  generateCheckList(month)
     if(countCheckedLifts == 0)
     {
         alert("You need to select a lift to see the task list!");
+        document.getElementById('active_month').selectedIndex = 0;
         return;
     }
     if(countCheckedLifts != 1)
@@ -372,9 +413,13 @@ function showTask2(month)
 		 </select>   
 		
 		<br>
-        <label>Task ids: </label>        
+        
+        <table id ="tblselectAllTasks">
+        <tr width="50%"><td >Select All tasks </td> <td> <input type="checkbox" id = "selectAllTasks" name="selectAllTasks" onclick="checkAllTasks();"  placeholder="selectAllTasks" class="form-control"  <?=$disabled?> > </td></tr>
+        </table>
+        
 		<div id="txtHit">
-        <input name="taskcheck" id="taskcheck" style="width:1px;height:1px;border:0px;">
+        
         <?
             $dateMounth = null ;
             $where = null ;
@@ -439,14 +484,7 @@ function showTask2(month)
             $("#liftcheck").val(1);
         });   
 
-
-        //Task checkbox validation
-        $(".chk__new_tasks").on("click",function(event,ui)
-        {
-            $("#taskcheck").val(1);
-        });   
-
-        
+ 
         document.getElementById('divSignPrint').style.display = "none";
         document.getElementById('divCustomerSignature').style.display = "none";
         document.getElementById('divNosignNeeded').style.display = "none";
